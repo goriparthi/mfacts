@@ -101,6 +101,29 @@
       background-color: yellow;
       font-weight: bold;
     }
+    /* Paper quiz styles */
+    #paper-quiz {
+      margin-top: 2rem;
+      font-size: 2rem;
+      display: none;
+    }
+    .quiz-paper-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .quiz-column {
+      display: grid;
+      grid-template-rows: repeat(15, auto);
+    }
+    .quiz-item {
+      margin: 0.5rem 0;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #paper-quiz, #paper-quiz * { visibility: visible; }
+      #paper-quiz { position: absolute; top: 0; left: 0; width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -116,160 +139,116 @@
     <br>
     <button onclick="startQuiz()">Start Quiz</button>
     <button onclick="showStudyFacts()">Study Facts</button>
+    <button onclick="printPaperQuiz()">Generate Paper Quiz</button>
     <div class="study-facts" id="study-facts"></div>
   </div>
 
   <div id="quiz" class="hidden">
     <div class="large" id="question"></div>
     <input type="number" id="answer" autofocus onkeydown="if(event.key==='Enter'){submitAnswer()}">
-    <div>
-      <button onclick="submitAnswer()">Submit</button>
-    </div>
-    <div class="large" id="score"></div>
+    <div><button onclick="submitAnswer()">Submit</button></div>
     <div class="large" id="timer"></div>
     <div id="feedback"></div>
   </div>
 
   <div id="end" class="hidden">
     <h2>Time's up!</h2>
-    <p class="large" id="final-score"></p>
+    <div id="final-score" class="large"></div>
     <div id="error-summary"></div>
     <button onclick="location.reload()">Try Again</button>
   </div>
 
+  <!-- Paper quiz output -->
+  <div id="paper-quiz">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Multiplication Paper Quiz</h2>
+      <button onclick="window.print()">Print</button>
+    </div>
+    <div class="quiz-paper-grid" id="quiz-paper-grid"></div>
+  </div>
+
   <script>
+    // Helpers
     function setRandomBackground() {
       const colors = [
-        ['#fef3c7', '#000'], ['#e0f2fe', '#000'], ['#f0fdf4', '#000'],
-        ['#fef2f2', '#000'], ['#ede9fe', '#000'], ['#fff7ed', '#000'],
-        ['#dbeafe', '#000'], ['#dcfce7', '#000'], ['#fce7f3', '#000']
+        ['#fef3c7','#000'],['#e0f2fe','#000'],['#f0fdf4','#000'],
+        ['#fef2f2','#000'],['#ede9fe','#000'],['#fff7ed','#000'],
+        ['#dbeafe','#000'],['#dcfce7','#000'],['#fce7f3','#000']
       ];
-      const [bg, fg] = colors[Math.floor(Math.random() * colors.length)];
+      const [bg,fg] = colors[Math.floor(Math.random()*colors.length)];
       document.body.style.backgroundColor = bg;
       document.body.style.color = fg;
     }
-    setRandomBackground();
 
-    const factOptions = document.getElementById('fact-options');
-    const studyFacts = document.getElementById('study-facts');
-    const quizDiv = document.getElementById('quiz');
-    const setupDiv = document.getElementById('setup');
-    const questionDiv = document.getElementById('question');
-    const timerDisplay = document.getElementById('timer');
+    // State
     let selectedFacts = [];
     let currentQuestion = {};
-    let timer;
-    let timeLeft;
     let incorrectAnswers = [];
+    let timer, timeLeft;
 
-    for (let i = 2; i <= 20; i++) {
-      const label = document.createElement('label');
-      label.className = 'fact-label';
-      label.innerHTML = `<input type="checkbox" value="${i}"> ${i}`;
-      factOptions.appendChild(label);
-    }
+    // Elements
+    const factOptions = document.getElementById('fact-options');
+    const studyFacts = document.getElementById('study-facts');
+    const setupDiv = document.getElementById('setup');
+    const quizDiv = document.getElementById('quiz');
+    const paperDiv = document.getElementById('paper-quiz');
+    const questionDiv = document.getElementById('question');
+    const timerDisplay = document.getElementById('timer');
 
-    function highlightFact(f, n) {
-      const value = f * n;
-      const text = `${f}×${n}=${value}`;
-      return (f === n || n === 5 || n === 10)
-        ? `<span class="highlight">${text}</span>`
-        : text;
-    }
+    // Init fact checkboxes
+    for(let i=2;i<=20;i++){const lbl=document.createElement('label');lbl.className='fact-label';lbl.innerHTML=`<input type="checkbox" value="${i}"> ${i}`;factOptions.appendChild(lbl);}    
 
-    function showStudyFacts() {
-      selectedFacts = Array.from(document.querySelectorAll('#fact-options input:checked'))
-        .map(el => parseInt(el.value));
-      if (selectedFacts.length === 0) {
-        alert("Please select at least one fact to study.");
-        return;
-      }
-      const groupedFacts = selectedFacts.map(f => {
-        let blocks = [`<strong>${f} Times Table</strong>`];
-        for (let i = 0; i <= 11; i += 3) {
-          const group = Array.from({ length: 3 }, (_, j) => i + j)
-            .filter(n => n <= 11)
-            .map(n => highlightFact(f, n))
-            .join('<br>');
-          blocks.push(`<div class="gap-group">${group}</div>`);
-        }
-        return `<div class="study-table">${blocks.join('')}</div>`;
+    function highlightFact(f,n){const v=f*n;const t=`${f}×${n}=${v}`;return(f===n||n===5||n===10)?`<span class="highlight">${t}</span>`:t;}
+
+    function showStudyFacts(){
+      paperDiv.style.display='none';document.getElementById('quiz-paper-grid').innerHTML='';
+      selectedFacts=Array.from(document.querySelectorAll('#fact-options input:checked')).map(el=>+el.value);
+      if(!selectedFacts.length){alert('Please select at least one fact to study.');return;}
+      studyFacts.innerHTML=selectedFacts.map(f=>{
+        let html=`<strong>${f} Times Table</strong>`;
+        for(let i=0;i<=11;i+=3){const block=Array.from({length:3},(_,j)=>i+j).filter(n=>n<=11).map(n=>highlightFact(f,n)).join('<br>');html+=`<div class="gap-group">${block}</div>`;}        
+        return`<div class="study-table">${html}</div>`;
       }).join('');
-      studyFacts.innerHTML = groupedFacts;
     }
 
-    function getRandomQuestion() {
-      const f = selectedFacts[Math.floor(Math.random() * selectedFacts.length)];
-      const n = Math.floor(Math.random() * 12);
-      return { f, n, answer: f * n };
+    function getRandomQuestion(){const f=selectedFacts[Math.floor(Math.random()*selectedFacts.length)];const n=Math.floor(Math.random()*12);return{f,n,answer:f*n};}
+
+    function displayQuestion(){currentQuestion=getRandomQuestion();questionDiv.textContent=`${currentQuestion.f} × ${currentQuestion.n} = ?`;}
+
+    function startQuiz(){
+      paperDiv.style.display='none';document.getElementById('quiz-paper-grid').innerHTML='';
+      selectedFacts=Array.from(document.querySelectorAll('#fact-options input:checked')).map(el=>+el.value);
+      if(!selectedFacts.length){alert('Select at least one table to start.');return;}
+      incorrectAnswers=[];
+      const dur=+document.querySelector('input[name="duration"]:checked').value;timeLeft=dur*60;
+      setupDiv.classList.add('hidden');quizDiv.classList.remove('hidden');
+      displayQuestion();timerDisplay.textContent=formatTime(timeLeft);
+      timer=setInterval(()=>{timeLeft--;timerDisplay.textContent=formatTime(timeLeft);if(timeLeft<=0){clearInterval(timer);endQuiz();}},1000);
     }
 
-    function displayQuestion() {
-      currentQuestion = getRandomQuestion();
-      questionDiv.textContent = `${currentQuestion.f} × ${currentQuestion.n} = ?`;
+    function submitAnswer(){const val=+document.getElementById('answer').value;if(val===currentQuestion.answer){feedback('correct','Correct!');}else{feedback('error',`Incorrect. ${currentQuestion.f} × ${currentQuestion.n} = ${currentQuestion.answer}`);incorrectAnswers.push({...currentQuestion});}document.getElementById('answer').value='';setTimeout(()=>{clearFeedback();displayQuestion();},1200);}
+
+    function endQuiz(){quizDiv.classList.add('hidden');document.getElementById('end').classList.remove('hidden');document.getElementById('final-score').textContent='Great job!';
+      const summary = incorrectAnswers.length? `<div class="fancy-summary"><h3>Facts to Review:</h3><ul>${incorrectAnswers.map(q=>`<li>${q.f} × ${q.n} = ${q.answer}</li>`).join('')}</ul></div>`:`<p class="correct">Awesome! You got everything right!</p>`;
+      document.getElementById('error-summary').innerHTML=summary;
     }
 
-    function startQuiz() {
-      selectedFacts = Array.from(document.querySelectorAll('#fact-options input:checked'))
-        .map(el => parseInt(el.value));
-      if (selectedFacts.length === 0) {
-        alert("Please select at least one multiplication table to start the quiz.");
-        return;
-      }
-      const duration = parseInt(document.querySelector('input[name="duration"]:checked').value);
-      timeLeft = duration * 60;
-      setupDiv.classList.add('hidden');
-      quizDiv.classList.remove('hidden');
-      displayQuestion();
-      timerDisplay.textContent = formatTime(timeLeft);
-      timer = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = formatTime(timeLeft);
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          endQuiz();
-        }
-      }, 1000);
+    function formatTime(s){const m=Math.floor(s/60),sec=s%60;return`${m}:${sec.toString().padStart(2,'0')}`;}
+
+    function printPaperQuiz(){
+      selectedFacts=Array.from(document.querySelectorAll('#fact-options input:checked')).map(el=>+el.value);
+      if(!selectedFacts.length){alert('Select at least one table to generate paper quiz.');return;}
+      const questions=[];for(let i=0;i<30;i++){const f=selectedFacts[Math.floor(Math.random()*selectedFacts.length)],n=Math.floor(Math.random()*12);questions.push(`${f} × ${n} = ______`);}      
+      const grid=document.getElementById('quiz-paper-grid');grid.innerHTML='';
+      const col1=document.createElement('div');col1.className='quiz-column';const col2=document.createElement('div');col2.className='quiz-column';
+      questions.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-item';d.textContent=q; if(i<15)col1.appendChild(d);else col2.appendChild(d);});
+      grid.appendChild(col1);grid.appendChild(col2);paperDiv.style.display='block';
     }
 
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
+    function feedback(type,msg){document.getElementById('feedback').innerHTML=`<span class="${type}">${msg}</span>`;}
+    function clearFeedback(){document.getElementById('feedback').innerHTML='';}
 
-    function endQuiz() {
-      quizDiv.classList.add('hidden');
-      document.getElementById('end').classList.remove('hidden');
-      document.getElementById('final-score').textContent = "Great job!";
-      if (incorrectAnswers.length > 0) {
-        const summaryHTML = `<div class="fancy-summary">
-          <h3>Facts to Review:</h3>
-          <ul>
-            ${incorrectAnswers.map(q => `<li>${q.f} × ${q.n} = ${q.answer}</li>`).join('')}
-          </ul>
-        </div>`;
-        document.getElementById('error-summary').innerHTML = summaryHTML;
-      } else {
-        document.getElementById('error-summary').innerHTML = '<p class="correct">Awesome! You got everything right!</p>';
-      }
-    }
-
-    function submitAnswer() {
-      const input = document.getElementById('answer');
-      const value = parseInt(input.value);
-      if (value === currentQuestion.answer) {
-        document.getElementById('feedback').innerHTML = '<span class="correct">Correct!</span>';
-      } else {
-        document.getElementById('feedback').innerHTML = `<span class="error">Incorrect. ${currentQuestion.f} × ${currentQuestion.n} = ${currentQuestion.answer}</span>`;
-        incorrectAnswers.push({ ...currentQuestion });
-      }
-      input.value = '';
-      setTimeout(() => {
-        document.getElementById('feedback').innerHTML = '';
-        displayQuestion();
-      }, 1200);
-    }
+    setRandomBackground();
   </script>
 </body>
 </html>
