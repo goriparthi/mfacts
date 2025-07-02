@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiplication Quiz</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.5rem;
+    }
+    .large {
+      font-size: 2rem;
+      margin: 1rem 0;
+    }
+    .hidden {
+      display: none;
+    }
+    .fact-label {
+      display: inline-block;
+      margin: 0.5rem 1.5rem;
+      font-size: 2rem;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.5);
+      margin-right: 0.5rem;
+    }
+    input[type="number"] {
+      font-size: 2rem;
+      width: 100px;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    button {
+      font-size: 1.5rem;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .correct {
+      color: green;
+      font-weight: bold;
+    }
+    .fancy-summary {
+      font-size: 1.5rem;
+      color: #333;
+      background-color: #f0f8ff;
+      padding: 1rem;
+      border-radius: 10px;
+      display: inline-block;
+      text-align: left;
+      margin-top: 1rem;
+    }
+    .fancy-summary h3 {
+      margin-bottom: 0.5rem;
+    }
+    .fancy-summary ul {
+      padding-left: 1.2rem;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Multiplication Quiz</h1>
+  <div id="setup">
+    <p>Select which multiplication facts to practice:</p>
+    <div id="fact-options"></div>
+    <p>Choose quiz duration:</p>
+    <label><input type="radio" name="duration" value="1"> 1 min</label>
+    <label><input type="radio" name="duration" value="2" checked> 2 mins</label>
+    <label><input type="radio" name="duration" value="3"> 3 mins</label>
+    <label><input type="radio" name="duration" value="4"> 4 mins</label>
+    <br>
+    <button onclick="startQuiz()">Start Quiz</button>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="large" id="question"></div>
+    <input type="number" id="answer" autofocus onkeydown="if(event.key==='Enter'){submitAnswer()}" />
+    <div>
+      <button onclick="submitAnswer()">Submit</button>
+    </div>
+    <div class="large" id="score"></div>
+    <div class="large" id="timer"></div>
+    <div id="feedback"></div>
+  </div>
+
+  <div id="end" class="hidden">
+    <h2>Time's up!</h2>
+    <p class="large" id="final-score"></p>
+    <div id="error-summary"></div>
+    <button onclick="location.reload()">Try Again</button>
+  </div>
+
+  <script>
+    const factOptions = document.getElementById('fact-options');
+    for (let i = 2; i <= 20; i++) {
+      const label = document.createElement('label');
+      label.className = 'fact-label';
+      label.innerHTML = `<input type="checkbox" value="${i}"> ${i}`;
+      factOptions.appendChild(label);
+    }
+
+    let selectedFacts = [];
+    let duration = 120;
+    let score = 0;
+    let timerInterval;
+    let currentQuestion;
+    let errors = [];
+
+    function startQuiz() {
+      selectedFacts = Array.from(document.querySelectorAll('#fact-options input:checked'))
+                            .map(el => parseInt(el.value));
+      if (selectedFacts.length === 0) {
+        alert("Please select at least one fact.");
+        return;
+      }
+
+      duration = parseInt(document.querySelector('input[name="duration"]:checked').value) * 60;
+      score = 0;
+      document.getElementById('setup').classList.add('hidden');
+      document.getElementById('quiz').classList.remove('hidden');
+      document.getElementById('score').textContent = `Score: ${score}`;
+      generateQuestion();
+      startTimer();
+    }
+
+    function generateQuestion() {
+      const a = selectedFacts[Math.floor(Math.random() * selectedFacts.length)];
+      const b = Math.floor(Math.random() * 10);
+      currentQuestion = { a, b };
+      document.getElementById('question').textContent = `${a} × ${b} = ?`;
+      document.getElementById('answer').value = '';
+      document.getElementById('answer').focus();
+      document.getElementById('feedback').innerHTML = '';
+    }
+
+    function submitAnswer() {
+      const input = parseInt(document.getElementById('answer').value);
+      const correct = currentQuestion.a * currentQuestion.b;
+      const feedbackEl = document.getElementById('feedback');
+      if (input === correct) {
+        score++;
+        document.getElementById('score').textContent = `Score: ${score}`;
+        feedbackEl.innerHTML = `<div class='correct'>Correct!</div>`;
+        setTimeout(generateQuestion, 800);
+      } else {
+        const errorMsg = `<div class='error'>Incorrect. ${currentQuestion.a} × ${currentQuestion.b} = ${correct}</div>`;
+        feedbackEl.innerHTML = errorMsg;
+        errors.push(`${currentQuestion.a} × ${currentQuestion.b} = ${correct}`);
+        setTimeout(generateQuestion, 1800);
+      }
+    }
+
+    function startTimer() {
+      updateTimer();
+      timerInterval = setInterval(() => {
+        duration--;
+        updateTimer();
+        if (duration <= 0) endQuiz();
+      }, 1000);
+    }
+
+    function updateTimer() {
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+      document.getElementById('timer').textContent = `Time Left: ${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function endQuiz() {
+      clearInterval(timerInterval);
+      document.getElementById('quiz').classList.add('hidden');
+      document.getElementById('end').classList.remove('hidden');
+      document.getElementById('final-score').textContent = `Your Score: ${score}`;
+
+      if (errors.length > 0) {
+        const summary = `<div class="fancy-summary"><h3>Facts to Review:</h3><ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul></div>`;
+        document.getElementById('error-summary').innerHTML = summary;
+      }
+    }
+  </script>
+</body>
+</html>
