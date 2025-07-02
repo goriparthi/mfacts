@@ -10,6 +10,7 @@
       text-align: center;
       padding: 2rem;
       font-size: 1.5rem;
+      color: #000;
     }
     .large {
       font-size: 2rem;
@@ -19,9 +20,18 @@
       display: none;
     }
     .fact-label {
-      display: inline-block;
-      margin: 0.5rem 1.5rem;
+      display: flex;
+      align-items: center;
       font-size: 2rem;
+      margin: 0.3rem;
+    }
+    .fact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 0.5rem;
+      justify-items: center;
+      max-width: 600px;
+      margin: 0 auto 1rem;
     }
     input[type="checkbox"] {
       transform: scale(1.5);
@@ -36,7 +46,7 @@
     button {
       font-size: 1.5rem;
       padding: 0.5rem 1rem;
-      margin-top: 1rem;
+      margin: 1rem 0.5rem 0 0.5rem;
     }
     .error {
       color: red;
@@ -63,25 +73,55 @@
       padding-left: 1.2rem;
       text-align: left;
     }
+    .study-facts {
+      margin-top: 2rem;
+      font-size: 1.25rem;
+      text-align: center;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .study-table {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .study-table strong {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 1.4rem;
+    }
+    .gap-group {
+      margin-bottom: 0.8rem;
+    }
+    .highlight {
+      background-color: yellow;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h1>Multiplication Quiz</h1>
   <div id="setup">
     <p>Select which multiplication facts to practice:</p>
-    <div id="fact-options"></div>
+    <div id="fact-options" class="fact-grid"></div>
     <p>Choose quiz duration:</p>
-    <label><input type="radio" name="duration" value="1"> 1 min</label>
-    <label><input type="radio" name="duration" value="2" checked> 2 mins</label>
+    <label><input type="radio" name="duration" value="1" checked> 1 min</label>
+    <label><input type="radio" name="duration" value="2"> 2 mins</label>
     <label><input type="radio" name="duration" value="3"> 3 mins</label>
     <label><input type="radio" name="duration" value="4"> 4 mins</label>
     <br>
     <button onclick="startQuiz()">Start Quiz</button>
+    <button onclick="showStudyFacts()">Study Facts</button>
+    <div class="study-facts" id="study-facts"></div>
   </div>
 
   <div id="quiz" class="hidden">
     <div class="large" id="question"></div>
-    <input type="number" id="answer" autofocus onkeydown="if(event.key==='Enter'){submitAnswer()}" />
+    <input type="number" id="answer" autofocus onkeydown="if(event.key==='Enter'){submitAnswer()}">
     <div>
       <button onclick="submitAnswer()">Submit</button>
     </div>
@@ -98,7 +138,30 @@
   </div>
 
   <script>
+    function setRandomBackground() {
+      const colors = [
+        ['#fef3c7', '#000'], ['#e0f2fe', '#000'], ['#f0fdf4', '#000'],
+        ['#fef2f2', '#000'], ['#ede9fe', '#000'], ['#fff7ed', '#000'],
+        ['#dbeafe', '#000'], ['#dcfce7', '#000'], ['#fce7f3', '#000']
+      ];
+      const [bg, fg] = colors[Math.floor(Math.random() * colors.length)];
+      document.body.style.backgroundColor = bg;
+      document.body.style.color = fg;
+    }
+    setRandomBackground();
+
     const factOptions = document.getElementById('fact-options');
+    const studyFacts = document.getElementById('study-facts');
+    const quizDiv = document.getElementById('quiz');
+    const setupDiv = document.getElementById('setup');
+    const questionDiv = document.getElementById('question');
+    const timerDisplay = document.getElementById('timer');
+    let selectedFacts = [];
+    let currentQuestion = {};
+    let timer;
+    let timeLeft;
+    let incorrectAnswers = [];
+
     for (let i = 2; i <= 20; i++) {
       const label = document.createElement('label');
       label.className = 'fact-label';
@@ -106,82 +169,106 @@
       factOptions.appendChild(label);
     }
 
-    let selectedFacts = [];
-    let duration = 120;
-    let score = 0;
-    let timerInterval;
-    let currentQuestion;
-    let errors = [];
+    function highlightFact(f, n) {
+      const value = f * n;
+      const text = `${f}×${n}=${value}`;
+      return (f === n || n === 5 || n === 10)
+        ? `<span class="highlight">${text}</span>`
+        : text;
+    }
+
+    function showStudyFacts() {
+      selectedFacts = Array.from(document.querySelectorAll('#fact-options input:checked'))
+        .map(el => parseInt(el.value));
+      if (selectedFacts.length === 0) {
+        alert("Please select at least one fact to study.");
+        return;
+      }
+      const groupedFacts = selectedFacts.map(f => {
+        let blocks = [`<strong>${f} Times Table</strong>`];
+        for (let i = 0; i <= 11; i += 3) {
+          const group = Array.from({ length: 3 }, (_, j) => i + j)
+            .filter(n => n <= 11)
+            .map(n => highlightFact(f, n))
+            .join('<br>');
+          blocks.push(`<div class="gap-group">${group}</div>`);
+        }
+        return `<div class="study-table">${blocks.join('')}</div>`;
+      }).join('');
+      studyFacts.innerHTML = groupedFacts;
+    }
+
+    function getRandomQuestion() {
+      const f = selectedFacts[Math.floor(Math.random() * selectedFacts.length)];
+      const n = Math.floor(Math.random() * 12);
+      return { f, n, answer: f * n };
+    }
+
+    function displayQuestion() {
+      currentQuestion = getRandomQuestion();
+      questionDiv.textContent = `${currentQuestion.f} × ${currentQuestion.n} = ?`;
+    }
 
     function startQuiz() {
       selectedFacts = Array.from(document.querySelectorAll('#fact-options input:checked'))
-                            .map(el => parseInt(el.value));
+        .map(el => parseInt(el.value));
       if (selectedFacts.length === 0) {
-        alert("Please select at least one fact.");
+        alert("Please select at least one multiplication table to start the quiz.");
         return;
       }
-
-      duration = parseInt(document.querySelector('input[name="duration"]:checked').value) * 60;
-      score = 0;
-      document.getElementById('setup').classList.add('hidden');
-      document.getElementById('quiz').classList.remove('hidden');
-      document.getElementById('score').textContent = `Score: ${score}`;
-      generateQuestion();
-      startTimer();
-    }
-
-    function generateQuestion() {
-      const a = selectedFacts[Math.floor(Math.random() * selectedFacts.length)];
-      const b = Math.floor(Math.random() * 10);
-      currentQuestion = { a, b };
-      document.getElementById('question').textContent = `${a} × ${b} = ?`;
-      document.getElementById('answer').value = '';
-      document.getElementById('answer').focus();
-      document.getElementById('feedback').innerHTML = '';
-    }
-
-    function submitAnswer() {
-      const input = parseInt(document.getElementById('answer').value);
-      const correct = currentQuestion.a * currentQuestion.b;
-      const feedbackEl = document.getElementById('feedback');
-      if (input === correct) {
-        score++;
-        document.getElementById('score').textContent = `Score: ${score}`;
-        feedbackEl.innerHTML = `<div class='correct'>Correct!</div>`;
-        setTimeout(generateQuestion, 800);
-      } else {
-        const errorMsg = `<div class='error'>Incorrect. ${currentQuestion.a} × ${currentQuestion.b} = ${correct}</div>`;
-        feedbackEl.innerHTML = errorMsg;
-        errors.push(`${currentQuestion.a} × ${currentQuestion.b} = ${correct}`);
-        setTimeout(generateQuestion, 1800);
-      }
-    }
-
-    function startTimer() {
-      updateTimer();
-      timerInterval = setInterval(() => {
-        duration--;
-        updateTimer();
-        if (duration <= 0) endQuiz();
+      const duration = parseInt(document.querySelector('input[name="duration"]:checked').value);
+      timeLeft = duration * 60;
+      setupDiv.classList.add('hidden');
+      quizDiv.classList.remove('hidden');
+      displayQuestion();
+      timerDisplay.textContent = formatTime(timeLeft);
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = formatTime(timeLeft);
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          endQuiz();
+        }
       }, 1000);
     }
 
-    function updateTimer() {
-      const mins = Math.floor(duration / 60);
-      const secs = duration % 60;
-      document.getElementById('timer').textContent = `Time Left: ${mins}:${secs.toString().padStart(2, '0')}`;
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
     function endQuiz() {
-      clearInterval(timerInterval);
-      document.getElementById('quiz').classList.add('hidden');
+      quizDiv.classList.add('hidden');
       document.getElementById('end').classList.remove('hidden');
-      document.getElementById('final-score').textContent = `Your Score: ${score}`;
-
-      if (errors.length > 0) {
-        const summary = `<div class="fancy-summary"><h3>Facts to Review:</h3><ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul></div>`;
-        document.getElementById('error-summary').innerHTML = summary;
+      document.getElementById('final-score').textContent = "Great job!";
+      if (incorrectAnswers.length > 0) {
+        const summaryHTML = `<div class="fancy-summary">
+          <h3>Facts to Review:</h3>
+          <ul>
+            ${incorrectAnswers.map(q => `<li>${q.f} × ${q.n} = ${q.answer}</li>`).join('')}
+          </ul>
+        </div>`;
+        document.getElementById('error-summary').innerHTML = summaryHTML;
+      } else {
+        document.getElementById('error-summary').innerHTML = '<p class="correct">Awesome! You got everything right!</p>';
       }
+    }
+
+    function submitAnswer() {
+      const input = document.getElementById('answer');
+      const value = parseInt(input.value);
+      if (value === currentQuestion.answer) {
+        document.getElementById('feedback').innerHTML = '<span class="correct">Correct!</span>';
+      } else {
+        document.getElementById('feedback').innerHTML = `<span class="error">Incorrect. ${currentQuestion.f} × ${currentQuestion.n} = ${currentQuestion.answer}</span>`;
+        incorrectAnswers.push({ ...currentQuestion });
+      }
+      input.value = '';
+      setTimeout(() => {
+        document.getElementById('feedback').innerHTML = '';
+        displayQuestion();
+      }, 1200);
     }
   </script>
 </body>
