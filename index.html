@@ -12,113 +12,31 @@
       font-size: 1.5rem;
       color: #000;
     }
-    .large {
-      font-size: 2rem;
-      margin: 1rem 0;
-    }
-    .hidden {
-      display: none;
-    }
-    .fact-label {
-      display: flex;
-      align-items: center;
-      font-size: 2rem;
-      margin: 0.3rem;
-    }
-    .fact-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-      gap: 0.5rem;
-      justify-items: center;
-      max-width: 600px;
-      margin: 0 auto 1rem;
-    }
-    input[type="checkbox"] {
-      transform: scale(1.5);
-      margin-right: 0.5rem;
-    }
-    input[type="number"] {
-      font-size: 2rem;
-      width: 100px;
-      text-align: center;
-      margin-top: 1rem;
-    }
-    button {
-      font-size: 1.5rem;
-      padding: 0.5rem 1rem;
-      margin: 1rem 0.5rem 0 0.5rem;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-    }
-    .correct {
-      color: green;
-      font-weight: bold;
-    }
-    .fancy-summary {
-      font-size: 1.5rem;
-      color: #333;
-      background-color: #f0f8ff;
-      padding: 1rem;
-      border-radius: 10px;
-      display: inline-block;
-      text-align: left;
-      margin-top: 1rem;
-    }
-    .fancy-summary h3 {
-      margin-bottom: 0.5rem;
-    }
-    .fancy-summary ul {
-      padding-left: 1.2rem;
-      text-align: left;
-    }
-    .study-facts {
-      margin-top: 2rem;
-      font-size: 1.25rem;
-      text-align: center;
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-    .study-table {
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      padding: 1rem;
-    }
-    .study-table strong {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-size: 1.4rem;
-    }
-    .gap-group {
-      margin-bottom: 0.8rem;
-    }
-    .highlight {
-      background-color: yellow;
-      font-weight: bold;
-    }
+    .large { font-size: 2rem; margin: 1rem 0; }
+    .hidden { display: none; }
+    .fact-label { display: flex; align-items: center; font-size: 2rem; margin: 0.3rem; }
+    .fact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 0.5rem; justify-items: center; max-width: 600px; margin: 0 auto 1rem; }
+    input[type="checkbox"] { transform: scale(1.5); margin-right: 0.5rem; }
+    input[type="number"] { font-size: 2rem; width: 100px; text-align: center; margin-top: 1rem; }
+    button { font-size: 1.5rem; padding: 0.5rem 1rem; margin: 1rem 0.5rem 0 0.5rem; }
+    .error { color: red; font-weight: bold; }
+    .correct { color: green; font-weight: bold; }
+    .fancy-summary { font-size: 1.5rem; color: #333; background-color: #f0f8ff; padding: 1rem; border-radius: 10px; display: inline-block; text-align: left; margin-top: 1rem; }
+    .fancy-summary h3 { margin-bottom: 0.5rem; }
+    .fancy-summary ul { padding-left: 1.2rem; text-align: left; }
+    .study-facts { margin-top: 2rem; font-size: 1.25rem; text-align: center; max-width: 1000px; margin-left: auto; margin-right: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .study-table { background-color: #f9f9f9; border-radius: 8px; padding: 1rem; }
+    .study-table strong { display: block; margin-bottom: 0.5rem; font-size: 1.4rem; }
+    .gap-group { margin-bottom: 0.8rem; }
+    .highlight { background-color: yellow; font-weight: bold; }
     /* Paper quiz styles */
-    #paper-quiz {
-      margin-top: 2rem;
-      font-size: 2rem;
-      display: none;
-    }
-    .quiz-paper-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-    .quiz-column {
-      display: grid;
-      grid-template-rows: repeat(15, auto);
-    }
-    .quiz-item {
-      margin: 0.5rem 0;
-    }
+    #paper-quiz { margin-top: 2rem; font-size: 2rem; display: none; }
+    .quiz-paper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .quiz-column { display: grid; grid-template-rows: repeat(15, auto); }
+    .quiz-item { margin: 0.5rem 0; }
+    /* Emoji visual styles */
+    #emoji-visual { margin-top: 1rem; }
+    #emoji-visual div { font-size: 1.5rem; margin-bottom: 0.2rem; }
     @media print {
       body * { visibility: hidden; }
       #paper-quiz, #paper-quiz * { visibility: visible; }
@@ -145,6 +63,7 @@
 
   <div id="quiz" class="hidden">
     <div class="large" id="question"></div>
+    <div id="emoji-visual"></div>
     <input type="number" id="answer" autofocus onkeydown="if(event.key==='Enter'){submitAnswer()}">
     <div><button onclick="submitAnswer()">Submit</button></div>
     <div class="large" id="timer"></div>
@@ -194,59 +113,152 @@
     const paperDiv = document.getElementById('paper-quiz');
     const questionDiv = document.getElementById('question');
     const timerDisplay = document.getElementById('timer');
+    const emojiVisual = document.getElementById('emoji-visual');
 
     // Init fact checkboxes
-    for(let i=2;i<=20;i++){const lbl=document.createElement('label');lbl.className='fact-label';lbl.innerHTML=`<input type="checkbox" value="${i}"> ${i}`;factOptions.appendChild(lbl);}    
+    for(let i=2; i<=20; i++) {
+      const lbl = document.createElement('label');
+      lbl.className = 'fact-label';
+      lbl.innerHTML = `<input type="checkbox" value="${i}"> ${i}`;
+      factOptions.appendChild(lbl);
+    }
 
-    function highlightFact(f,n){const v=f*n;const t=`${f}×${n}=${v}`;return(f===n||n===5||n===10)?`<span class="highlight">${t}</span>`:t;}
+    function highlightFact(f,n) {
+      const v = f * n;
+      const t = `${f}×${n}=${v}`;
+      return (f === n || n === 5 || n === 10)
+        ? `<span class="highlight">${t}</span>`
+        : t;
+    }
 
-    function showStudyFacts(){
-      paperDiv.style.display='none';document.getElementById('quiz-paper-grid').innerHTML='';
-      selectedFacts=Array.from(document.querySelectorAll('#fact-options input:checked')).map(el=>+el.value);
-      if(!selectedFacts.length){alert('Please select at least one fact to study.');return;}
-      studyFacts.innerHTML=selectedFacts.map(f=>{
-        let html=`<strong>${f} Times Table</strong>`;
-        for(let i=0;i<=11;i+=3){const block=Array.from({length:3},(_,j)=>i+j).filter(n=>n<=11).map(n=>highlightFact(f,n)).join('<br>');html+=`<div class="gap-group">${block}</div>`;}        
-        return`<div class="study-table">${html}</div>`;
+    function showStudyFacts() {
+      paperDiv.style.display = 'none';
+      document.getElementById('quiz-paper-grid').innerHTML = '';
+      selectedFacts = Array.from(
+        document.querySelectorAll('#fact-options input:checked')
+      ).map(el => +el.value);
+      if (!selectedFacts.length) {
+        alert('Please select at least one fact to study.');
+        return;
+      }
+      studyFacts.innerHTML = selectedFacts.map(f => {
+        let html = `<strong>${f} Times Table</strong>`;
+        for (let i = 0; i <= 11; i += 3) {
+          const block = Array.from({ length: 3 }, (_, j) => i+j)
+            .filter(n => n <= 11)
+            .map(n => highlightFact(f,n))
+            .join('<br>');
+          html += `<div class="gap-group">${block}</div>`;
+        }
+        return `<div class="study-table">${html}</div>`;
       }).join('');
     }
 
-    function getRandomQuestion(){const f=selectedFacts[Math.floor(Math.random()*selectedFacts.length)];const n=Math.floor(Math.random()*12);return{f,n,answer:f*n};}
-
-    function displayQuestion(){currentQuestion=getRandomQuestion();questionDiv.textContent=`${currentQuestion.f} × ${currentQuestion.n} = ?`;}
-
-    function startQuiz(){
-      paperDiv.style.display='none';document.getElementById('quiz-paper-grid').innerHTML='';
-      selectedFacts=Array.from(document.querySelectorAll('#fact-options input:checked')).map(el=>+el.value);
-      if(!selectedFacts.length){alert('Select at least one table to start.');return;}
-      incorrectAnswers=[];
-      const dur=+document.querySelector('input[name="duration"]:checked').value;timeLeft=dur*60;
-      setupDiv.classList.add('hidden');quizDiv.classList.remove('hidden');
-      displayQuestion();timerDisplay.textContent=formatTime(timeLeft);
-      timer=setInterval(()=>{timeLeft--;timerDisplay.textContent=formatTime(timeLeft);if(timeLeft<=0){clearInterval(timer);endQuiz();}},1000);
+    function getRandomQuestion() {
+      const f = selectedFacts[Math.floor(Math.random() * selectedFacts.length)];
+      const n = Math.floor(Math.random() * 12);
+      return { f, n, answer: f*n };
     }
 
-    function submitAnswer(){const val=+document.getElementById('answer').value;if(val===currentQuestion.answer){feedback('correct','Correct!');}else{feedback('error',`Incorrect. ${currentQuestion.f} × ${currentQuestion.n} = ${currentQuestion.answer}`);incorrectAnswers.push({...currentQuestion});}document.getElementById('answer').value='';setTimeout(()=>{clearFeedback();displayQuestion();},1200);}
-
-    function endQuiz(){quizDiv.classList.add('hidden');document.getElementById('end').classList.remove('hidden');document.getElementById('final-score').textContent='Great job!';
-      const summary = incorrectAnswers.length? `<div class="fancy-summary"><h3>Facts to Review:</h3><ul>${incorrectAnswers.map(q=>`<li>${q.f} × ${q.n} = ${q.answer}</li>`).join('')}</ul></div>`:`<p class="correct">Awesome! You got everything right!</p>`;
-      document.getElementById('error-summary').innerHTML=summary;
+    function displayQuestion() {
+      currentQuestion = getRandomQuestion();
+      questionDiv.textContent = `${currentQuestion.f} × ${currentQuestion.n} = ?`;
+      renderVisual(currentQuestion.f, currentQuestion.n);
     }
 
-    function formatTime(s){const m=Math.floor(s/60),sec=s%60;return`${m}:${sec.toString().padStart(2,'0')}`;}
-
-    function printPaperQuiz(){
-      selectedFacts=Array.from(document.querySelectorAll('#fact-options input:checked')).map(el=>+el.value);
-      if(!selectedFacts.length){alert('Select at least one table to generate paper quiz.');return;}
-      const questions=[];for(let i=0;i<30;i++){const f=selectedFacts[Math.floor(Math.random()*selectedFacts.length)],n=Math.floor(Math.random()*12);questions.push(`${f} × ${n} = ______`);}      
-      const grid=document.getElementById('quiz-paper-grid');grid.innerHTML='';
-      const col1=document.createElement('div');col1.className='quiz-column';const col2=document.createElement('div');col2.className='quiz-column';
-      questions.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-item';d.textContent=q; if(i<15)col1.appendChild(d);else col2.appendChild(d);});
-      grid.appendChild(col1);grid.appendChild(col2);paperDiv.style.display='block';
+    function renderVisual(groups, items) {
+      emojiVisual.innerHTML = '';
+      const emoji = '🍎';
+      for (let i = 0; i < groups; i++) {
+        emojiVisual.innerHTML += `<div>${emoji.repeat(items)}</div>`;
+      }
     }
 
-    function feedback(type,msg){document.getElementById('feedback').innerHTML=`<span class="${type}">${msg}</span>`;}
-    function clearFeedback(){document.getElementById('feedback').innerHTML='';}
+    function startQuiz() {
+      paperDiv.style.display = 'none';
+      document.getElementById('quiz-paper-grid').innerHTML = '';
+      selectedFacts = Array.from(
+        document.querySelectorAll('#fact-options input:checked')
+      ).map(el => +el.value);
+      if (!selectedFacts.length) {
+        alert('Select at least one table to start.');
+        return;
+      }
+      incorrectAnswers = [];
+      const dur = +document.querySelector('input[name="duration"]:checked').value;
+      timeLeft = dur * 60;
+      setupDiv.classList.add('hidden');
+      quizDiv.classList.remove('hidden');
+      displayQuestion();
+      timerDisplay.textContent = formatTime(timeLeft);
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = formatTime(timeLeft);
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          endQuiz();
+        }
+      }, 1000);
+    }
+
+    function submitAnswer() {
+      const val = +document.getElementById('answer').value;
+      if (val === currentQuestion.answer) {
+        feedback('correct','Correct!');
+      } else {
+        feedback('error',`Incorrect. ${currentQuestion.f} × ${currentQuestion.n} = ${currentQuestion.answer}`);
+        incorrectAnswers.push({...currentQuestion});
+      }
+      document.getElementById('answer').value = '';
+      setTimeout(() => {
+        clearFeedback();
+        displayQuestion();
+      }, 1200);
+    }
+
+    function endQuiz() {
+      quizDiv.classList.add('hidden');
+      document.getElementById('end').classList.remove('hidden');
+      document.getElementById('final-score').textContent = 'Great job!';
+      const summary = incorrectAnswers.length
+        ? `<div class="fancy-summary"><h3>Facts to Review:</h3><ul>${incorrectAnswers.map(q => `<li>${q.f} × ${q.n} = ${q.answer}</li>`).join('')}</ul></div>`
+        : `<p class="correct">Awesome! You got everything right!</p>`;
+      document.getElementById('error-summary').innerHTML = summary;
+    }
+
+    function formatTime(s) {
+      const m = Math.floor(s/60), sec = s % 60;
+      return `${m}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    function printPaperQuiz() {
+      selectedFacts = Array.from(
+        document.querySelectorAll('#fact-options input:checked')
+      ).map(el => +el.value);
+      if (!selectedFacts.length) {
+        alert('Select at least one table to generate paper quiz.');
+        return;
+      }
+      const questions = [];
+      for (let i = 0; i < 30; i++) {
+        const f = selectedFacts[Math.floor(Math.random()*selectedFacts.length)];
+        const n = Math.floor(Math.random()*12);
+        questions.push(`${f} × ${n} = ______`);
+      }
+      const grid = document.getElementById('quiz-paper-grid');
+      grid.innerHTML = '';
+      const col1 = document.createElement('div'); col1.className = 'quiz-column';
+      const col2 = document.createElement('div'); col2.className = 'quiz-column';
+      questions.forEach((q,i) => {
+        const d = document.createElement('div'); d.className = 'quiz-item'; d.textContent = q;
+        if (i < 15) col1.appendChild(d); else col2.appendChild(d);
+      });
+      grid.appendChild(col1); grid.appendChild(col2);
+      paperDiv.style.display = 'block';
+    }
+
+    function feedback(type,msg) { document.getElementById('feedback').innerHTML = `<span class="${type}">${msg}</span>`; }
+    function clearFeedback() { document.getElementById('feedback').innerHTML = ''; }
 
     setRandomBackground();
   </script>
